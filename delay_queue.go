@@ -178,21 +178,16 @@ func (dm *DelayMessage) AddTask(t time.Time, key string, exec TaskFunc, params [
 }
 
 //移除任务
-func (dm *DelayMessage) RemoveTask(t time.Time, key string) error {
+func (dm *DelayMessage) RemoveTask(key string) error {
 	dm.lock.Lock()
 	defer dm.lock.Unlock()
-	if dm.startTime.After(t) {
-		return errors.New("时间错误")
+
+	for _, taskMap:= range dm.slots {
+		if _, ok := taskMap[key]; ok {
+			delete(taskMap, key)
+		}
 	}
-	//当前时间与指定时间相差秒数
-	subSecond := t.Unix() - dm.startTime.Unix()
-	//计算任务所在的slots的下标
-	ix := subSecond % 3600
-	//把任务加入tasks中
-	tasks := dm.slots[ix]
-	if _, ok := tasks[key]; ok {
-		delete(tasks, key)
-	}
+
 	return nil
 }
 
